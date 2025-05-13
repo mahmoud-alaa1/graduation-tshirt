@@ -57,6 +57,7 @@ import { FormInput } from "./forms/FormInput";
 import { RadioGroupField } from "./forms/FormRadioGroup";
 import { Input } from "./ui/input";
 import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
 export default function TshirtForm() {
   const form = useForm<formType>({
     resolver: zodResolver(formSchema),
@@ -92,21 +93,41 @@ export default function TshirtForm() {
         size: values.size,
         payment: values.payment,
         payment_proof: paymentProofUrl,
+        tshirtName: values.tshirtName,
+        totalAmount: totalAmount,
       });
 
     if (insertError) {
-      console.error("خطأ في الحفظ:", insertError);
+      toast.error("حصلت مشكلة ... كلم محمود علاء");
     } else {
-      alert("تم الحجز بنجاح!");
+      toast.success("تم الحجز بنجاح لو عاوز تعدل كلم محمود علاء او احمد شحاتة");
+
       form.reset({
         name: "",
-        tshirtName: "",
-        type: undefined,
-        size: undefined,
         payment: undefined,
         paymentProof: undefined,
+        size: undefined,
+        type: undefined,
+        tshirtName: "",
       });
     }
+  }
+
+  let totalAmount = 0;
+
+  if (form.watch("type") === "full") {
+    totalAmount = 230;
+  } else {
+    totalAmount = 190;
+  }
+
+  if (
+    form.watch("size") !== "3xl" &&
+    form.watch("size") !== "2xl" &&
+    form.watch("size") !== "xl" &&
+    form.watch("size") !== "lg"
+  ) {
+    totalAmount += 60;
   }
 
   const paymentMethod = useWatch({
@@ -144,8 +165,15 @@ export default function TshirtForm() {
           control={form.control}
           name="type"
           options={[
-            { value: "half", label: "راوند كم (لسه متحددش سعر)" },
-            { value: "full", label: "راوند نص كم (190ج)" },
+            {
+              value: "half",
+              label: "راوند نص كم (190ج لو المقاس اكبر من 3XL السعر 250ج)",
+            },
+            {
+              value: "full",
+              label:
+                "راوند كم السعر 230ج لو المقاس اكبر من 3XL السعر 290ج واعلى مقاس 5XL",
+            },
           ]}
           direction="rtl"
         />
@@ -177,7 +205,7 @@ export default function TshirtForm() {
           name="payment"
           direction="rtl"
           options={[
-            { value: "contact", label: "هتكلمني وتدفع كاش" },
+            { value: "contact", label: "هتكلم شحاتة وتدفع كاش" },
             { value: "upload", label: "هرفع صورة التحويل" },
           ]}
         />
@@ -203,6 +231,9 @@ export default function TshirtForm() {
           />
         )}
 
+        <div className="text-center text-xl font-bold text-red-500">
+          المبلغ المطلوب: {totalAmount} ج
+        </div>
         <Button
           type="submit"
           className="cursor-pointer bg-blue-400 p-4 hover:bg-blue-500"

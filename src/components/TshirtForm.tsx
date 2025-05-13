@@ -1,24 +1,40 @@
 "use client";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-const formSchema = z.object({
-  username: z
-    .string({
-      required_error: "لازم تدخل اسمك",
-    })
-    .min(1, {
+const formSchema = z
+  .object({
+    username: z.string({ required_error: "لازم تدخل اسمك" }).min(1, {
       message: "لازم تدخل اسمك",
     }),
-
-  type: z.enum(["all", "mentions", "none"], {
-    required_error: "لازم تختار نوع التشيرت",
-  }),
-  size: z.enum(["lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl"], {
-    required_error: "لازم تختار حجم التشيرت",
-  }),
-});
+    type: z.enum(["half", "full"], {
+      required_error: "لازم تختار نوع التشيرت",
+    }),
+    size: z.enum(
+      ["lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl"] as const,
+      {
+        required_error: "لازم تختار حجم التشيرت",
+      },
+    ),
+    payment: z.enum(["contact", "upload"], {
+      required_error: "لازم تختار طريقة الدفع",
+    }),
+    paymentProof: z
+      .any()
+      .refine(
+        (file) => file instanceof File || file === undefined,
+        "لازم ترفع صورة لو اخترت تحويل",
+      )
+      .optional(),
+  })
+  .refine(
+    (data) => data.payment !== "upload" || data.paymentProof instanceof File,
+    {
+      path: ["paymentProof"],
+      message: "ارفع صورة الدفع لو اخترت تحويل",
+    },
+  );
 
 type formType = z.infer<typeof formSchema>;
 
@@ -31,10 +47,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "./ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import SizesTable from "./SizesTable";
 import { FormInput } from "./forms/FormInput";
+import { RadioGroupField } from "./forms/FormRadioGroup";
+import { Input } from "./ui/input";
 export default function TshirtForm() {
   const form = useForm<formType>({
     resolver: zodResolver(formSchema),
@@ -43,6 +59,12 @@ export default function TshirtForm() {
   function onSubmit(values: formType) {
     console.log(values);
   }
+
+  const paymentMethod = useWatch({
+    control: form.control,
+    name: "payment",
+  });
+
   return (
     <Form {...form}>
       <form
@@ -55,130 +77,77 @@ export default function TshirtForm() {
           name="username"
           label="الاسم"
           className="max-w-sm"
+          autoComplete="name"
+          placeholder="اكتب اسمك ..."
+          type="text"
         />
-
-        <FormField
+        <RadioGroupField<formType>
+          label="نوع التشيرت"
           control={form.control}
           name="type"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>النوع</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  dir="rtl"
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <FormItem className="flex items-center space-y-0 space-x-0.5">
-                    <FormControl>
-                      <RadioGroupItem value="all" />
-                    </FormControl>
-                    <FormLabel className="font-normal">راوند كم</FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-y-0 space-x-0.5">
-                    <FormControl>
-                      <RadioGroupItem value="mentions" />
-                    </FormControl>
-                    <FormLabel className="font-normal">راوند نص كم</FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          options={[
+            { value: "half", label: "راوند كم" },
+            { value: "full", label: "راوند نص كم" },
+          ]}
+          direction="rtl"
         />
-        <FormField
+        <div className="flex flex-wrap justify-between gap-4">
+          <RadioGroupField<formType>
+            label="حجم التشيرت"
+            control={form.control}
+            name="size"
+            className="space-y-2"
+            options={[
+              { value: "lg", label: "LG" },
+              { value: "xl", label: "XL" },
+              { value: "2xl", label: "2XL" },
+              { value: "3xl", label: "3XL" },
+              { value: "4xl", label: "4XL" },
+              { value: "5xl", label: "5XL" },
+              { value: "6xl", label: "6XL" },
+              { value: "7xl", label: "7XL" },
+              { value: "8xl", label: "8XL" },
+            ]}
+            direction="rtl"
+          />
+          <SizesTable />
+        </div>
+
+        <RadioGroupField<formType>
+          label="طريقة الدفع"
           control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>الحجم</FormLabel>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex flex-col space-y-5">
-                  <FormControl>
-                    <RadioGroup
-                      dir="rtl"
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="space-y-3"
-                    >
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="all" />
-                        </FormControl>
-                        <FormLabel className="font-normal">لارج</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">اكس لارج</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">2اكس لارج</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">3اكس لارج</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          راوند نص كم
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          راوند نص كم
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          راوند نص كم
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          راوند نص كم
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-y-0 space-x-0.5">
-                        <FormControl>
-                          <RadioGroupItem value="mentions" />
-                        </FormControl>
-                        <FormLabel className="font-normal">
-                          راوند نص كم
-                        </FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </div>
-
-                <SizesTable />
-              </div>
-            </FormItem>
-          )}
+          name="payment"
+          direction="rtl"
+          options={[
+            { value: "contact", label: "هتكلمني وتدفع كاش" },
+            { value: "upload", label: "هرفع صورة التحويل" },
+          ]}
         />
 
-        <Button type="submit" className="bg-blue-400">
+        {paymentMethod === "upload" && (
+          <FormField
+            control={form.control}
+            name="paymentProof"
+            render={({ field }) => (
+              <FormItem className="max-w-sm space-y-2">
+                <FormLabel>صورة التحويل</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => field.onChange(e.target.files?.[0])}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        <Button
+          type="submit"
+          className="cursor-pointer bg-blue-400 hover:bg-blue-500"
+        >
           احجز
         </Button>
       </form>

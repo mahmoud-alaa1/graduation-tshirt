@@ -9,21 +9,15 @@ const amiri = Amiri({
 });
 export default function Header() {
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-col items-center justify-between gap-8">
       <Image
-        alt="لوجو الكلية"
-        className="size-20 object-contain sm:size-30"
-        src={logo}
+        alt="لوجو التيشيرت"
+        className="size-40 object-contain sm:size-50"
+        src={tshirtLogo}
       />
       <p className={`${amiri.className} text-2xl font-bold sm:text-4xl`}>
         مَبْرُوكُ التَّخَرُّجِ
       </p>
-
-      <Image
-        alt="لوجو التيشيرت"
-        className="size-20 object-contain sm:size-30"
-        src={tshirtLogo}
-      />
     </div>
   );
 }

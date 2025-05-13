@@ -10,6 +10,7 @@ export default function Home() {
         <Paragraph />
         <hr className="my-2 border-2" />
         <TshirtForm />
+        <div className="text-center font-bold">Powered by Mahmoud Alaa</div>{" "}
       </div>
     </div>
   );

@@ -58,10 +58,13 @@ import { RadioGroupField } from "./forms/FormRadioGroup";
 import { Input } from "./ui/input";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 export default function TshirtForm() {
   const form = useForm<formType>({
     resolver: zodResolver(formSchema),
   });
+
+  const router = useRouter();
 
   async function onSubmit(values: formType) {
     console.log(values);
@@ -100,7 +103,7 @@ export default function TshirtForm() {
     if (insertError) {
       toast.error("حصلت مشكلة ... كلم محمود علاء");
     } else {
-      toast.success("تم الحجز بنجاح لو عاوز تعدل كلم محمود علاء او احمد شحاتة");
+      router.push("/done");
 
       form.reset({
         name: "",
@@ -231,15 +234,21 @@ export default function TshirtForm() {
           />
         )}
 
-        <div className="text-center text-xl font-bold text-red-500">
-          المبلغ المطلوب: {totalAmount} ج
+        {form.getValues("size") !== undefined &&
+          form.getValues("type") !== undefined && (
+            <div className="text-center text-xl font-bold text-red-500">
+              المبلغ المطلوب: {totalAmount} ج
+            </div>
+          )}
+
+        <div className="flex justify-center">
+          <Button
+            type="submit"
+            className="cursor-pointer bg-blue-400 p-4 hover:bg-blue-500"
+          >
+            احجز
+          </Button>
         </div>
-        <Button
-          type="submit"
-          className="cursor-pointer bg-blue-400 p-4 hover:bg-blue-500"
-        >
-          احجز
-        </Button>
       </form>
     </Form>
   );

@@ -5,9 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 const formSchema = z
   .object({
-    username: z.string({ required_error: "لازم تدخل اسمك" }).min(1, {
+    name: z.string({ required_error: "لازم تدخل اسمك" }).min(1, {
       message: "لازم تدخل اسمك",
     }),
+    tshirtName: z
+      .string({ required_error: "لازم تدخل الاسم اللي على التيشيرت" })
+      .min(1, {
+        message: "لازم تدخل الاسم على التيشيرت",
+      }),
     type: z.enum(["half", "full"], {
       required_error: "لازم تختار نوع التشيرت",
     }),
@@ -51,13 +56,57 @@ import SizesTable from "./SizesTable";
 import { FormInput } from "./forms/FormInput";
 import { RadioGroupField } from "./forms/FormRadioGroup";
 import { Input } from "./ui/input";
+import { supabase } from "@/lib/supabase";
 export default function TshirtForm() {
   const form = useForm<formType>({
     resolver: zodResolver(formSchema),
   });
 
-  function onSubmit(values: formType) {
+  async function onSubmit(values: formType) {
     console.log(values);
+    let paymentProofUrl: string | null = null;
+
+    if (values.payment === "upload" && values.paymentProof instanceof File) {
+      const { data, error } = await supabase.storage
+        .from("tshirt-payments")
+        .upload(
+          `proofs/${Date.now()}-${values.paymentProof.name}`,
+          values.paymentProof,
+        );
+
+      if (error) {
+        console.error("خطأ في رفع الصورة:", error);
+        return;
+      }
+
+      paymentProofUrl = supabase.storage
+        .from("tshirt-payments")
+        .getPublicUrl(data.path).data.publicUrl;
+    }
+
+    const { error: insertError } = await supabase
+      .from("tshirt_reservations")
+      .insert({
+        name: values.name,
+        type: values.type,
+        size: values.size,
+        payment: values.payment,
+        payment_proof: paymentProofUrl,
+      });
+
+    if (insertError) {
+      console.error("خطأ في الحفظ:", insertError);
+    } else {
+      alert("تم الحجز بنجاح!");
+      form.reset({
+        name: "",
+        tshirtName: "",
+        type: undefined,
+        size: undefined,
+        payment: undefined,
+        paymentProof: undefined,
+      });
+    }
   }
 
   const paymentMethod = useWatch({
@@ -74,11 +123,20 @@ export default function TshirtForm() {
       >
         <FormInput<formType>
           control={form.control}
-          name="username"
-          label="الاسم"
+          name="name"
+          label="الاسم بالكامل"
           className="max-w-sm"
           autoComplete="name"
           placeholder="اكتب اسمك ..."
+          type="text"
+        />
+        <FormInput<formType>
+          control={form.control}
+          name="tshirtName"
+          label="الاسم على التيشيرت"
+          className="max-w-sm"
+          autoComplete="name"
+          placeholder="اكتب الاسم اللي عاوزه على التيشيرت مثلا: محمود"
           type="text"
         />
         <RadioGroupField<formType>
@@ -86,8 +144,8 @@ export default function TshirtForm() {
           control={form.control}
           name="type"
           options={[
-            { value: "half", label: "راوند كم" },
-            { value: "full", label: "راوند نص كم" },
+            { value: "half", label: "راوند كم (لسه متحددش سعر)" },
+            { value: "full", label: "راوند نص كم (190ج)" },
           ]}
           direction="rtl"
         />
@@ -133,6 +191,7 @@ export default function TshirtForm() {
                 <FormLabel>صورة التحويل</FormLabel>
                 <FormControl>
                   <Input
+                    placeholder="ارفع صورة التحويل"
                     type="file"
                     accept="image/*"
                     onChange={(e) => field.onChange(e.target.files?.[0])}
@@ -146,7 +205,7 @@ export default function TshirtForm() {
 
         <Button
           type="submit"
-          className="cursor-pointer bg-blue-400 hover:bg-blue-500"
+          className="cursor-pointer bg-blue-400 p-4 hover:bg-blue-500"
         >
           احجز
         </Button>

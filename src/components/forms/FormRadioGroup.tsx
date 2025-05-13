@@ -43,7 +43,7 @@ export function RadioGroupField<T extends FieldValues>({
               id={name}
               dir={direction}
               onValueChange={field.onChange}
-              defaultValue={field.value}
+              value={field.value}
               className={cn("flex flex-col space-y-1", className)}
             >
               {options.map((option, idx) => (

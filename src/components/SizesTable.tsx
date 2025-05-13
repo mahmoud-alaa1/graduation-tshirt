@@ -36,31 +36,31 @@ const tableRows = [
     size: "4XL",
     weight: "من 85 ل 95",
     width: "57",
-    length: "76",
+    length: "78",
   },
   {
     size: "5XL",
     weight: "من 95 ل 110",
     width: "60",
-    length: "78",
+    length: "80",
   },
   {
     size: "6XL",
     weight: "من 110 ل 120",
     width: "65",
-    length: "80",
+    length: "82",
   },
   {
     size: "7XL",
     weight: "من 120 ل 130",
     width: "68",
-    length: "82",
+    length: "83",
   },
   {
     size: "8XL",
     weight: "من 130 ل 140",
     width: "72",
-    length: "84",
+    length: "83",
   },
 ];
 
